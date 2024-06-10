@@ -44,11 +44,11 @@ public class MemberRepository {
     }
 
     public boolean existsByEmail(String email) {
-        return !jdbcTemplate.query("SELECT 1 FROM Member WHERE email = ? LIMIT 1", memberRowMapper(), email).isEmpty();
+        return !jdbcTemplate.query("SELECT 1 FROM Member WHERE email = ? LIMIT 1", (rs, rowNum) -> 1, email).isEmpty();
     }
 
     public boolean existsByNickname(String nickname) {
-        return !jdbcTemplate.query("SELECT 1 FROM Member WHERE nickname = ? LIMIT 1", memberRowMapper(), nickname).isEmpty();
+        return !jdbcTemplate.query("SELECT 1 FROM Member WHERE nickname = ? LIMIT 1", (rs, rowNum) -> 1, nickname).isEmpty();
     }
 
     private RowMapper<Member> memberRowMapper() {
