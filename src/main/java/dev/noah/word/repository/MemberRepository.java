@@ -20,11 +20,11 @@ public class MemberRepository {
     }
 
     public Optional<Member> findById(long id) {
-        return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT * FROM Member WHERE id = ?", memberRowMapper(), id));
+        return jdbcTemplate.query("SELECT * FROM Member WHERE id = ?", memberRowMapper(), id).stream().findFirst();
     }
 
     public Optional<Member> findByEmailAndPassword(String email, String password) {
-        return Optional.ofNullable(jdbcTemplate.queryForObject("SELECT * FROM Member WHERE email = ? and password = ?", memberRowMapper(), email, password));
+        return jdbcTemplate.query("SELECT * FROM Member WHERE email = ? and password = ?", memberRowMapper(), email, password).stream().findFirst();
     }
 
     public List<Member> findAll() {
@@ -44,11 +44,11 @@ public class MemberRepository {
     }
 
     public boolean existsByEmail(String email) {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT 1 FROM Member WHERE email = ? LIMIT 1", Boolean.class, email));
+        return !jdbcTemplate.query("SELECT 1 FROM Member WHERE email = ? LIMIT 1", memberRowMapper(), email).isEmpty();
     }
 
     public boolean existsByNickname(String nickname) {
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject("SELECT 1 FROM Member WHERE nickname = ? LIMIT 1", Boolean.class, nickname));
+        return !jdbcTemplate.query("SELECT 1 FROM Member WHERE nickname = ? LIMIT 1", memberRowMapper(), nickname).isEmpty();
     }
 
     private RowMapper<Member> memberRowMapper() {
