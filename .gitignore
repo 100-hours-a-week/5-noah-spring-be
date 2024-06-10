@@ -1,3 +1,7 @@
+### 사진
+/src/main/resources/public/member-images
+/src/main/resources/public/post-images
+
 HELP.md
 .gradle
 build/
