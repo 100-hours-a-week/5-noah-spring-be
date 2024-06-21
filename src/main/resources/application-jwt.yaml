@@ -1,0 +1,4 @@
+# 공부 중이므로 숨기지 않음
+jwt:
+  secret-key: Judge thyself with the judgment of sincerity, and thou will judge others with the judgment of charity.
+  expiration-in-ms: 900000 # 15분

@@ -1,6 +1,7 @@
 package dev.noah.word.service;
 
 import dev.noah.word.exception.*;
+import dev.noah.word.common.JwtProvider;
 import dev.noah.word.repository.MemberRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,9 +25,14 @@ public class SignService {
     private static final String MEMBER_IMAGE_SAVE_PATH = "src/main/resources/public/" + MEMBER_IMAGE_SAVE_DIRECTORY;
 
     private final MemberRepository memberRepository;
+    private final JwtProvider jwtProvider;
 
-    public long signIn(String email, String password) {
-        return memberRepository.findByEmailAndPassword(email, password).orElseThrow(AuthenticationFailedException::new).id();
+    public String signIn(String email, String password) {
+        long foundMemberId = memberRepository.findByEmailAndPassword(email, password)
+                .orElseThrow(AuthenticationFailedException::new)
+                .id();
+
+        return jwtProvider.generateJwt(foundMemberId);
     }
 
     @Transactional

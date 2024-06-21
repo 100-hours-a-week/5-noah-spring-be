@@ -1,6 +1,8 @@
 spring:
   application:
     name: word
+  config:
+    import: application-jwt.yaml
   datasource:
     url: jdbc:mysql://localhost:3306/noahDatabase
     username: root

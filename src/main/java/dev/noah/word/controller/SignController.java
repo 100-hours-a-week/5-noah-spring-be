@@ -5,46 +5,46 @@ import dev.noah.word.request.SignInRequest;
 import dev.noah.word.response.ErrorResponse;
 import dev.noah.word.service.SignService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@AllArgsConstructor
 public class SignController {
+
+    @Value("${jwt.expiration-in-ms}")
+    private int expirationInMs;
 
     private final SignService signService;
 
+    public SignController(SignService signService) {
+        this.signService = signService;
+    }
+
     @PostMapping("/api/sign-in")
-    public ResponseEntity<Void> signIn(HttpSession httpSession, @RequestBody SignInRequest request) {
-        if (httpSession.getAttribute("id") != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+    public ResponseEntity<Void> signIn(@RequestBody SignInRequest request) {
+        String jwt = signService.signIn(request.getEmail(), request.getPassword());
 
-        httpSession.setAttribute("id", signService.signIn(request.getEmail(), request.getPassword()));
+        ResponseCookie responseCookie = ResponseCookie
+                .from("accessToken", jwt)
+                .path("/")
+                .httpOnly(true)
+                .maxAge(expirationInMs)
+                .build();
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, responseCookie.toString()).build();
     }
 
     @PostMapping("/api/sign-out")
-    public ResponseEntity<Void> signOut(HttpSession httpSession) {
-        httpSession.invalidate();
-
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> signOut() {
+        // TODO 고민 후 나중에 구현
+        return ResponseEntity.ok().build();
     }
 
     // serverUrl을 받기 위해 HttpServletRequest 사용
     @PostMapping("/api/sign-up")
     public ResponseEntity<Void> signUp(HttpServletRequest httpServletRequestRequest, @RequestPart("image") MultipartFile image, @RequestPart("email") String email, @RequestPart("password") String password, @RequestPart("nickname") String nickname) {
-        HttpSession httpSession = httpServletRequestRequest.getSession();
-
-        if (httpSession.getAttribute("id") != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
         signService.signUp(getServerUrl(httpServletRequestRequest), image, email, password, nickname);
 
         return ResponseEntity.status(HttpStatus.OK).build();
