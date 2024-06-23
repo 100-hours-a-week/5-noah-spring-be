@@ -2,33 +2,27 @@ package dev.noah.word.service;
 
 import dev.noah.word.exception.*;
 import dev.noah.word.common.JwtProvider;
-import dev.noah.word.repository.MemberRepository;
+import dev.noah.word.repository.MemberJdbcTemplateRepository;
+import dev.noah.word.service.utils.ImageUtilityComponent;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
 @AllArgsConstructor
 public class SignService {
 
-    private static final String MEMBER_IMAGE_SAVE_DIRECTORY = "member-images/";
-    private static final String MEMBER_IMAGE_SAVE_PATH = "src/main/resources/public/" + MEMBER_IMAGE_SAVE_DIRECTORY;
+    private static final String MEMBER_IMAGE_SAVE_DIRECTORY_PATH = "/member-images/";
+    private static final String MEMBER_IMAGE_SAVE_RELATIVE_PATH = "src/main/resources/public" + MEMBER_IMAGE_SAVE_DIRECTORY_PATH;
 
-    private final MemberRepository memberRepository;
+    private final MemberJdbcTemplateRepository memberJdbcTemplateRepository;
     private final JwtProvider jwtProvider;
+    private final ImageUtilityComponent imageUtilityComponent;
 
     public String signIn(String email, String password) {
-        long foundMemberId = memberRepository.findByEmailAndPassword(email, password)
+        long foundMemberId = memberJdbcTemplateRepository.findByEmailAndPassword(email, password)
                 .orElseThrow(AuthenticationFailedException::new)
                 .id();
 
@@ -36,41 +30,18 @@ public class SignService {
     }
 
     @Transactional
-    public void signUp(String serverUrl, MultipartFile image, String email, String password, String nickname) {
-        if (memberRepository.existsByEmail(email)) {
+    public void signUp(MultipartFile image, String email, String password, String nickname) {
+        if (memberJdbcTemplateRepository.existsByEmail(email)) {
             throw new DuplicateEmailException();
         }
 
-        if (memberRepository.existsByNickname(nickname)) {
+        if (memberJdbcTemplateRepository.existsByNickname(nickname)) {
             throw new DuplicateNicknameException();
         }
 
-        String imageName = generateImageName(image);
+        String imageUrl = imageUtilityComponent
+                .saveImageAndReturnImageUrl(image, MEMBER_IMAGE_SAVE_DIRECTORY_PATH, MEMBER_IMAGE_SAVE_RELATIVE_PATH);
 
-        Path path = Paths.get(MEMBER_IMAGE_SAVE_PATH + imageName);
-        try {
-            Files.createDirectories(path.getParent());
-            Files.write(path, image.getBytes());
-        } catch (IOException e) {
-            throw new ImageSaveFailedException();
-        }
-
-        memberRepository.save(serverUrl + "/" + MEMBER_IMAGE_SAVE_DIRECTORY + imageName, email, password, nickname);
-    }
-
-    private String generateImageName(MultipartFile image) {
-        return UUID.randomUUID() + getImageExtension(StringUtils.cleanPath(Objects.requireNonNull(image.getOriginalFilename())));
-    }
-
-    private String getImageExtension(String imageName) {
-        String extension = "";
-
-        int index = imageName.lastIndexOf('.');
-
-        if (index > 0) {
-            extension = imageName.substring(index);
-        }
-
-        return extension;
+        memberJdbcTemplateRepository.save(imageUrl, email, password, nickname);
     }
 }

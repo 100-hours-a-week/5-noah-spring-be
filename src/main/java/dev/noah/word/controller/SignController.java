@@ -4,7 +4,6 @@ import dev.noah.word.exception.*;
 import dev.noah.word.request.SignInRequest;
 import dev.noah.word.response.ErrorResponse;
 import dev.noah.word.service.SignService;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -42,16 +41,15 @@ public class SignController {
         return ResponseEntity.ok().build();
     }
 
-    // serverUrl을 받기 위해 HttpServletRequest 사용
     @PostMapping("/api/sign-up")
-    public ResponseEntity<Void> signUp(HttpServletRequest httpServletRequestRequest, @RequestPart("image") MultipartFile image, @RequestPart("email") String email, @RequestPart("password") String password, @RequestPart("nickname") String nickname) {
-        signService.signUp(getServerUrl(httpServletRequestRequest), image, email, password, nickname);
+    public ResponseEntity<Void> signUp(
+            @RequestPart("image") MultipartFile image,
+            @RequestPart("email") String email,
+            @RequestPart("password") String password,
+            @RequestPart("nickname") String nickname) {
+        signService.signUp(image, email, password, nickname);
 
         return ResponseEntity.status(HttpStatus.OK).build();
-    }
-
-    private String getServerUrl(HttpServletRequest request) {
-        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
     }
 
     @ExceptionHandler(AuthenticationFailedException.class)
@@ -66,11 +64,6 @@ public class SignController {
 
     @ExceptionHandler(DuplicateNicknameException.class)
     public ResponseEntity<ErrorResponse> duplicateNicknameExceptionHandler(DuplicateNicknameException exception) {
-        return ResponseEntity.status(exception.getHttpStatus()).body(new ErrorResponse(exception.getMessage()));
-    }
-
-    @ExceptionHandler(ImageSaveFailedException.class)
-    public ResponseEntity<ErrorResponse> imageSaveFailedExceptionHandler(ImageSaveFailedException exception) {
         return ResponseEntity.status(exception.getHttpStatus()).body(new ErrorResponse(exception.getMessage()));
     }
 }

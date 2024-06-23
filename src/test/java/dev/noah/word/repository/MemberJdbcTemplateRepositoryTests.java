@@ -13,11 +13,11 @@ import java.util.Optional;
 
 @JdbcTest
 @Transactional
-@Import(MemberRepository.class)
-public class MemberRepositoryTests {
+@Import(MemberJdbcTemplateRepository.class)
+public class MemberJdbcTemplateRepositoryTests {
 
     @Autowired
-    MemberRepository memberRepository;
+    MemberJdbcTemplateRepository memberJdbcTemplateRepository;
 
     @Test
     void should_pass_save() {
@@ -28,10 +28,10 @@ public class MemberRepositoryTests {
         String nickname = "testUser";
 
         // when
-        memberRepository.save(imageUrl, email, password, nickname);
+        memberJdbcTemplateRepository.save(imageUrl, email, password, nickname);
 
         // then
-        Optional<Member> foundMemberOptional = memberRepository.findByEmailAndPassword(email, password);
+        Optional<Member> foundMemberOptional = memberJdbcTemplateRepository.findByEmailAndPassword(email, password);
 
         if (foundMemberOptional.isEmpty()) {
             Assertions.fail();
@@ -49,10 +49,10 @@ public class MemberRepositoryTests {
 
         // when
         // INFO: id 주의
-        memberRepository.updateImageUrlAndNicknameById(1, newImageUrl, newNickname);
+        memberJdbcTemplateRepository.updateImageUrlAndNicknameById(1, newImageUrl, newNickname);
 
         // then
-        Optional<Member> foundMemberOptional = memberRepository.findByEmailAndPassword(email, password);
+        Optional<Member> foundMemberOptional = memberJdbcTemplateRepository.findByEmailAndPassword(email, password);
 
         if (foundMemberOptional.isEmpty()) {
             Assertions.fail();
@@ -74,10 +74,10 @@ public class MemberRepositoryTests {
 
         // when
         // INFO: id 주의
-        memberRepository.updatePasswordById(2, newPassword);
+        memberJdbcTemplateRepository.updatePasswordById(2, newPassword);
 
         // then
-        Optional<Member> foundMemberOptional = memberRepository.findByEmailAndPassword(email, newPassword);
+        Optional<Member> foundMemberOptional = memberJdbcTemplateRepository.findByEmailAndPassword(email, newPassword);
 
         if (foundMemberOptional.isEmpty()) {
             Assertions.fail();
@@ -92,12 +92,12 @@ public class MemberRepositoryTests {
     @Test
     void should_pass_deleteById() {
         // when, then
-        Assertions.assertEquals(5, memberRepository.findAll().size());
+        Assertions.assertEquals(5, memberJdbcTemplateRepository.findAll().size());
 
         // INFO: id 주의
-        memberRepository.deleteById(3);
+        memberJdbcTemplateRepository.deleteById(3);
 
-        Assertions.assertEquals(4, memberRepository.findAll().size());
+        Assertions.assertEquals(4, memberJdbcTemplateRepository.findAll().size());
     }
 
     @Test
@@ -109,7 +109,7 @@ public class MemberRepositoryTests {
         String nickname = "testUser";
 
         // when, then
-        Assertions.assertThrows(DuplicateKeyException.class, () -> memberRepository.save(imageUrl, email, password, nickname));
+        Assertions.assertThrows(DuplicateKeyException.class, () -> memberJdbcTemplateRepository.save(imageUrl, email, password, nickname));
     }
 
     @Test
@@ -118,7 +118,7 @@ public class MemberRepositoryTests {
         String email = "email1";
 
         // when, then
-        Assertions.assertTrue(memberRepository.existsByEmail(email));
+        Assertions.assertTrue(memberJdbcTemplateRepository.existsByEmail(email));
     }
 
     @Test
@@ -130,7 +130,7 @@ public class MemberRepositoryTests {
         String nickname = "nickname1";
 
         // when, then
-        Assertions.assertThrows(DuplicateKeyException.class, () -> memberRepository.save(imageUrl, email, password, nickname));
+        Assertions.assertThrows(DuplicateKeyException.class, () -> memberJdbcTemplateRepository.save(imageUrl, email, password, nickname));
     }
 
     @Test
@@ -139,6 +139,6 @@ public class MemberRepositoryTests {
         String nickname = "nickname1";
 
         // when, then
-        Assertions.assertTrue(memberRepository.existsByNickname(nickname));
+        Assertions.assertTrue(memberJdbcTemplateRepository.existsByNickname(nickname));
     }
 }
