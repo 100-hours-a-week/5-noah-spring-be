@@ -2,7 +2,7 @@ package dev.noah.word.service;
 
 import dev.noah.word.entity.MemberEntity;
 import dev.noah.word.entity.PostEntity;
-import dev.noah.word.exception.AuthorizationException;
+import dev.noah.word.exception.NotAuthorizedException;
 import dev.noah.word.exception.MemberNotFoundException;
 import dev.noah.word.exception.PostNotFoundException;
 import dev.noah.word.repository.MemberJpaRepository;
@@ -83,7 +83,7 @@ public class PostService {
                 .orElseThrow(PostNotFoundException::new);
 
         if (foundPostEntity.getMemberEntity().getId() != memberId) {
-            throw new AuthorizationException();
+            throw new NotAuthorizedException();
         }
 
         String imageUrl = imageUtilityComponent
@@ -103,7 +103,7 @@ public class PostService {
                 .orElseThrow(PostNotFoundException::new);
 
         if (foundPostEntity.getMemberEntity().getId() != memberId) {
-            throw new AuthorizationException();
+            throw new NotAuthorizedException();
         }
 
         postJpaRepository.deleteById(id);

@@ -2,9 +2,9 @@ package dev.noah.word.exception;
 
 import org.springframework.http.HttpStatus;
 
-public class AuthorizationException extends BaseException {
+public class NotAuthorizedException extends BaseException {
 
-    public AuthorizationException() {
+    public NotAuthorizedException() {
         super("NOT_AUTHORIZED", HttpStatus.FORBIDDEN);
     }
 }
