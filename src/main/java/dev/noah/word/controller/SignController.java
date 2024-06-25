@@ -2,14 +2,18 @@ package dev.noah.word.controller;
 
 import dev.noah.word.exception.*;
 import dev.noah.word.request.SignInRequest;
+import dev.noah.word.request.SignUpRequest;
 import dev.noah.word.response.ErrorResponse;
 import dev.noah.word.service.SignService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class SignController {
 
     @Value("${jwt.expiration-in-ms}")
@@ -17,13 +21,9 @@ public class SignController {
 
     private final SignService signService;
 
-    public SignController(SignService signService) {
-        this.signService = signService;
-    }
-
-    @PostMapping("/api/sign-in")
-    public ResponseEntity<Void> signIn(@RequestBody SignInRequest request) {
-        String jwt = signService.signIn(request.getEmail(), request.getPassword());
+    @PostMapping("/sign-in")
+    public ResponseEntity<Void> signIn(@Valid @RequestBody SignInRequest request) {
+        String jwt = signService.signIn(request.email(), request.password());
 
         ResponseCookie responseCookie = ResponseCookie
                 .from("accessToken", jwt)
@@ -35,19 +35,19 @@ public class SignController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, responseCookie.toString()).build();
     }
 
-    @PostMapping("/api/sign-out")
+    @PostMapping("/sign-out")
     public ResponseEntity<Void> signOut() {
         // TODO 고민 후 나중에 구현
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/api/sign-up")
-    public ResponseEntity<Void> signUp(
-            @RequestPart("image") MultipartFile image,
-            @RequestPart("email") String email,
-            @RequestPart("password") String password,
-            @RequestPart("nickname") String nickname) {
-        signService.signUp(image, email, password, nickname);
+    @PostMapping("/sign-up")
+    public ResponseEntity<Void> signUp(@Valid SignUpRequest signUpRequest) {
+        signService.signUp(
+                signUpRequest.image(),
+                signUpRequest.email(),
+                signUpRequest.password(),
+                signUpRequest.nickname());
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

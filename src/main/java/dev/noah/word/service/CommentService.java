@@ -31,7 +31,7 @@ public class CommentService {
             throw new PostNotFoundException();
         }
 
-        return commentJpaRepository.findAll()
+        return commentJpaRepository.findAllByPostEntity_Id(postId)
                 .stream()
                 .map(commentEntity -> new SearchAllCommentResponse(
                         commentEntity.getId(),

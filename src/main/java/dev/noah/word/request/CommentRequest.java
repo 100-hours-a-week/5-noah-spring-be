@@ -1,9 +1,8 @@
 package dev.noah.word.request;
 
-import lombok.Getter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-@Getter
-public class CommentRequest {
-
-    private String content;
+public record CommentRequest(
+        @NotBlank @Size(min = 1, max = 256) String content) {
 }

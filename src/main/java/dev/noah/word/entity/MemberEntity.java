@@ -23,7 +23,7 @@ public class MemberEntity {
     @Column(nullable = false, unique = true, length = 64)
     private String email;
 
-    @Column(nullable = false, length = 64)
+    @Column(nullable = false, length = 60)
     private String password;
 
     @Column(nullable = false, unique = true, length = 10)

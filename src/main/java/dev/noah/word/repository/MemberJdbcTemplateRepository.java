@@ -23,8 +23,8 @@ public class MemberJdbcTemplateRepository {
         return jdbcTemplate.query("SELECT * FROM member WHERE id = ?", memberRowMapper(), id).stream().findFirst();
     }
 
-    public Optional<Member> findByEmailAndPassword(String email, String password) {
-        return jdbcTemplate.query("SELECT * FROM member WHERE email = ? and password = ?", memberRowMapper(), email, password).stream().findFirst();
+    public Optional<Member> findByEmail(String email) {
+        return jdbcTemplate.query("SELECT * FROM member WHERE email = ?", memberRowMapper(), email).stream().findFirst();
     }
 
     public List<Member> findAll() {

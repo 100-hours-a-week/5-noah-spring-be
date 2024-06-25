@@ -1,63 +1,66 @@
 package dev.noah.word.controller;
 
+import dev.noah.word.request.PostRequest;
 import dev.noah.word.response.SearchAllPostResponse;
 import dev.noah.word.response.SearchPostResponse;
 import dev.noah.word.service.PostService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/posts")
 @AllArgsConstructor
 public class PostController {
 
     private final PostService postService;
 
-    @GetMapping("/api/posts")
+    @GetMapping
     public List<SearchAllPostResponse> searchAll() {
         return postService.searchAll();
     }
 
-    @GetMapping("/api/posts/{id}")
+    @GetMapping("/{id}")
     public SearchPostResponse getPost(@PathVariable long id) {
         return postService.searchById(id);
     }
 
-    @PostMapping("/api/posts")
+    @PostMapping
     public ResponseEntity<Void> createPost(
-            Principal principal,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @RequestPart("title") String title,
-            @RequestPart("content") String content) {
-        postService.createPost(getMemberId(principal), image, title, content);
+            @AuthenticationPrincipal long memberId,
+            @Valid PostRequest postRequest) {
+        postService.createPost(
+                memberId,
+                postRequest.image(),
+                postRequest.title(),
+                postRequest.content());
 
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/api/posts/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<Void> editPost(
             @PathVariable long id,
-            Principal principal,
-            @RequestPart(value = "image", required = false) MultipartFile image,
-            @RequestPart("title") String title,
-            @RequestPart("content") String content) {
-        postService.editPost(id, getMemberId(principal), image, title, content);
+            @AuthenticationPrincipal long memberId,
+            @Valid PostRequest postRequest) {
+        postService.editPost(
+                id,
+                memberId,
+                postRequest.image(),
+                postRequest.title(),
+                postRequest.content());
 
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/api/posts/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable long id, Principal principal) {
-        postService.deletePost(id, getMemberId(principal));
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable long id, @AuthenticationPrincipal long memberId) {
+        postService.deletePost(id, memberId);
 
         return ResponseEntity.ok().build();
-    }
-
-    private long getMemberId(Principal principal) {
-        return Long.parseLong(principal.getName());
     }
 }
