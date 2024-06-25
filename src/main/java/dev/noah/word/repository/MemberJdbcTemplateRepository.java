@@ -43,6 +43,10 @@ public class MemberJdbcTemplateRepository {
         jdbcTemplate.update("DELETE FROM member WHERE id = ?", id);
     }
 
+    public boolean existsById(long id) {
+        return !jdbcTemplate.query("SELECT 1 FROM member WHERE id = ? LIMIT 1", (rs, rowNum) -> 1, id).isEmpty();
+    }
+
     public boolean existsByEmail(String email) {
         return !jdbcTemplate.query("SELECT 1 FROM member WHERE email = ? LIMIT 1", (rs, rowNum) -> 1, email).isEmpty();
     }

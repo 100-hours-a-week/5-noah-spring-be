@@ -4,12 +4,18 @@ import dev.noah.word.exception.*;
 import dev.noah.word.response.ErrorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(exception.getBindingResult().getAllErrors().get(0).getDefaultMessage()));
+    }
 
     // 해당 메서드가 없을 때 (405, Method Not Allowed) 대신 (400, BAD_REQUEST)로 은닉
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

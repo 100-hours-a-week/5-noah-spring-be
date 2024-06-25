@@ -18,6 +18,7 @@ public class ImageUtilityComponent {
 
     // 이렇게 사용해도 될까? 고민 중
     private static final String SERVER_ADDRESS = "http://localhost:8080";
+    private static final String FILE_PATH = "src/main/resources/public";
 
     public String saveImageAndReturnImageUrl(MultipartFile image, String directoryPath, String relativePath) {
         if (image == null || image.isEmpty()) {
@@ -61,10 +62,10 @@ public class ImageUtilityComponent {
 
         String relativePath = imageUrl.replace(SERVER_ADDRESS, "");
 
-        Path path = Paths.get(relativePath);
+        Path path = Paths.get(FILE_PATH + relativePath);
 
         try {
-            Files.deleteIfExists(path);
+            Files.delete(path);
         } catch (IOException e) {
             throw new ImageDeleteFailedException();
         }
