@@ -68,6 +68,10 @@ public class PostService {
 
     @Transactional
     public void createPost(long memberId, MultipartFile image, String title, String content) {
+        if (!memberJpaRepository.existsById(memberId)) {
+            throw new MemberNotFoundException();
+        }
+
         MemberEntity foundMemberEntity = memberJpaRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 
         String imageUrl = imageUtilityComponent
@@ -79,6 +83,10 @@ public class PostService {
 
     @Transactional
     public void editPost(long id, long memberId, MultipartFile image, String title, String content) {
+        if (!memberJpaRepository.existsById(memberId)) {
+            throw new MemberNotFoundException();
+        }
+
         PostEntity foundPostEntity = postJpaRepository.findById(id)
                 .orElseThrow(PostNotFoundException::new);
 
@@ -99,6 +107,10 @@ public class PostService {
 
     @Transactional
     public void deletePost(long id, long memberId) {
+        if (!memberJpaRepository.existsById(memberId)) {
+            throw new MemberNotFoundException();
+        }
+
         PostEntity foundPostEntity = postJpaRepository.findById(id)
                 .orElseThrow(PostNotFoundException::new);
 

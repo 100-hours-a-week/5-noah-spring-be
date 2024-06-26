@@ -55,6 +55,10 @@ public class CommentService {
 
     @Transactional
     public void edit(long memberId, long id, String content) {
+        if (!memberJpaRepository.existsById(memberId)) {
+            throw new MemberNotFoundException();
+        }
+
         CommentEntity foundCommentEntity = commentJpaRepository.findById(id)
                 .orElseThrow(CommentNotFoundException::new);
 
@@ -67,6 +71,10 @@ public class CommentService {
 
     @Transactional
     public void delete(long memberId, long id) {
+        if (!memberJpaRepository.existsById(memberId)) {
+            throw new MemberNotFoundException();
+        }
+
         CommentEntity foundCommentEntity = commentJpaRepository.findById(id)
                 .orElseThrow(CommentNotFoundException::new);
 
