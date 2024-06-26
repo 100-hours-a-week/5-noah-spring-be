@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(new ErrorResponse("BAD_REQUEST"));
     }
 
+    @ExceptionHandler(DuplicateNicknameException.class)
+    public ResponseEntity<ErrorResponse> duplicateNicknameExceptionHandler(DuplicateNicknameException exception) {
+        return ResponseEntity.status(exception.getHttpStatus()).body(new ErrorResponse(exception.getMessage()));
+    }
+
     @ExceptionHandler(ImageSaveFailedException.class)
     public ResponseEntity<ErrorResponse> imageSaveFailedExceptionHandler(ImageSaveFailedException exception) {
         return ResponseEntity.status(exception.getHttpStatus()).body(new ErrorResponse(exception.getMessage()));

@@ -61,9 +61,4 @@ public class SignController {
     public ResponseEntity<ErrorResponse> duplicateEmailExceptionHandler(DuplicateEmailException exception) {
         return ResponseEntity.status(exception.getHttpStatus()).body(new ErrorResponse(exception.getMessage()));
     }
-
-    @ExceptionHandler(DuplicateNicknameException.class)
-    public ResponseEntity<ErrorResponse> duplicateNicknameExceptionHandler(DuplicateNicknameException exception) {
-        return ResponseEntity.status(exception.getHttpStatus()).body(new ErrorResponse(exception.getMessage()));
-    }
 }
