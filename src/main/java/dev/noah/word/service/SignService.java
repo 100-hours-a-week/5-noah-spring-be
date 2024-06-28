@@ -24,6 +24,9 @@ public class SignService {
     private final ImageUtilityComponent imageUtilityComponent;
     private final PasswordEncoder passwordEncoder;
 
+    /* query: 1
+     * 1. JDBC, 사용자 조회
+     */
     public String signIn(String email, String password) {
         Member foundMember = memberJdbcTemplateRepository.findByEmail(email)
                 .orElseThrow(AuthenticationFailedException::new);
@@ -35,6 +38,11 @@ public class SignService {
         return jwtProvider.generateJwt(foundMember.id());
     }
 
+    /* query: 3
+     * 1. JDBC, 사용자 이메일 중복 확인
+     * 2. JDBC, 사용자 닉네임 중복 확인
+     * 3. 사용자 저장
+     */
     @Transactional
     public void signUp(MultipartFile image, String email, String password, String nickname) {
         if (memberJdbcTemplateRepository.existsByEmail(email)) {

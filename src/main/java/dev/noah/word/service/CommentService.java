@@ -26,6 +26,10 @@ public class CommentService {
     private final MemberJpaRepository memberJpaRepository;
     private final PostJpaRepository postJpaRepository;
 
+    /* query: 2
+     * 1. JPA, 게시글 존재 유무 확인
+     * 2. JPA, 게시글에 달린 댓글 조회 (최적화)
+     */
     public List<SearchAllCommentResponse> searchAll(long postId) {
         if (!postJpaRepository.existsById(postId)) {
             throw new PostNotFoundException();
@@ -42,6 +46,11 @@ public class CommentService {
                 .toList();
     }
 
+    /* query: 3
+     * 1. JPA, 사용자 조회
+     * 1. JPA, 게시글 조회
+     * 2. JPA, 댓글 저장
+     */
     @Transactional
     public void create(long memberId, long postId, String content) {
         MemberEntity foundMemberEntity = memberJpaRepository.findById(memberId)
@@ -53,6 +62,11 @@ public class CommentService {
         commentJpaRepository.save(new CommentEntity(foundMemberEntity, foundPostEntity, content));
     }
 
+    /* query: 3
+     * 1. JPA, 사용자 존재 유무 확인
+     * 2. JPA, 댓글 조회
+     * 3. JPA, 댓글 갱신
+     */
     @Transactional
     public void edit(long memberId, long id, String content) {
         if (!memberJpaRepository.existsById(memberId)) {
@@ -69,6 +83,11 @@ public class CommentService {
         foundCommentEntity.edit(content);
     }
 
+    /* query: 3
+     * 1. JPA, 사용자 존재 유무 확인
+     * 2. JPA, 댓글 조회
+     * 3. JPA, 댓글 삭제
+     */
     @Transactional
     public void delete(long memberId, long id) {
         if (!memberJpaRepository.existsById(memberId)) {

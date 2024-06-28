@@ -5,6 +5,7 @@ import dev.noah.word.entity.PostEntity;
 import dev.noah.word.exception.NotAuthorizedException;
 import dev.noah.word.exception.MemberNotFoundException;
 import dev.noah.word.exception.PostNotFoundException;
+import dev.noah.word.repository.CommentJpaRepository;
 import dev.noah.word.repository.MemberJpaRepository;
 import dev.noah.word.repository.PostJpaRepository;
 import dev.noah.word.response.SearchAllPostResponse;
@@ -27,51 +28,51 @@ public class PostService {
 
     private final PostJpaRepository postJpaRepository;
     private final MemberJpaRepository memberJpaRepository;
+    private final CommentJpaRepository commentJpaRepository;
     private final ImageUtilityComponent imageUtilityComponent;
 
+    /* query: 1
+     * 1. JPA, 게시글 전체 조회 (최적화)
+     */
     public List<SearchAllPostResponse> searchAll() {
-        // TODO comments 처리 필요
-        return postJpaRepository.findAll().stream()
-                .map(postEntity -> new SearchAllPostResponse(
-                        postEntity.getId(),
-                        postEntity.getMemberEntity().getNickname(),
-                        postEntity.getMemberEntity().getImageUrl(),
-                        postEntity.getCreatedDate(),
-                        postEntity.getTitle(),
-                        postEntity.getViews(),
-                        postEntity.getLikes(),
-                        0))
+        return postJpaRepository.findAllWithAuthorAndComments().stream()
+                .map(simplePostDto -> new SearchAllPostResponse(
+                        simplePostDto.id(),
+                        simplePostDto.authorName(),
+                        simplePostDto.authorImageUrl(),
+                        simplePostDto.createdDate(),
+                        simplePostDto.title(),
+                        simplePostDto.views(),
+                        simplePostDto.likes(),
+                        simplePostDto.comments()
+                ))
                 .toList();
     }
 
+    /* query: 3
+     * 1. JPA, 게시글 조회
+     * 2. JPA, 게시글 views 1 증가 (Dirty Checking)
+     * 3. JPA, 게시글 조회 (최적화)
+     *
+     * - views 로직 개선 필요
+     * - views 로직 없다면 1개의 쿼리로 조회 가능
+     */
     @Transactional
     public SearchPostResponse searchById(long id) {
-        // TODO comments 처리 필요
-        PostEntity foundPostEntity = postJpaRepository.findById(id)
+        // FIXME
+        postJpaRepository.findById(id)
+                .orElseThrow(PostNotFoundException::new).increaseViews();
+
+        return postJpaRepository.findWithAuthorAndCommentsById(id)
                 .orElseThrow(PostNotFoundException::new);
-
-        // TODO 고민
-        foundPostEntity.increaseViews();
-        postJpaRepository.save(foundPostEntity);
-
-        return new SearchPostResponse(
-                foundPostEntity.getId(),
-                foundPostEntity.getMemberEntity().getNickname(),
-                foundPostEntity.getMemberEntity().getNickname(),
-                foundPostEntity.getCreatedDate(),
-                foundPostEntity.getTitle(),
-                foundPostEntity.getContent(),
-                foundPostEntity.getViews(),
-                0
-        );
     }
 
+    /* query: 2
+     * 1. JPA, 사용자 조회
+     * 2. JPA, 게시글 게시글 저장
+     */
     @Transactional
     public void createPost(long memberId, MultipartFile image, String title, String content) {
-        if (!memberJpaRepository.existsById(memberId)) {
-            throw new MemberNotFoundException();
-        }
-
         MemberEntity foundMemberEntity = memberJpaRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 
         String imageUrl = imageUtilityComponent
@@ -80,7 +81,11 @@ public class PostService {
         postJpaRepository.save(new PostEntity(foundMemberEntity, imageUrl, title, content));
     }
 
-
+    /* query: 3
+     * 1. JPA, 사용자 존재 유무 확인
+     * 2. JPA, 게시글 조회
+     * 3. JPA. 게시글 갱신
+     */
     @Transactional
     public void editPost(long id, long memberId, MultipartFile image, String title, String content) {
         if (!memberJpaRepository.existsById(memberId)) {
@@ -105,6 +110,13 @@ public class PostService {
         postJpaRepository.save(foundPostEntity);
     }
 
+    /* query: 5
+     * 1. JPA, 사용자 존재 유무 확인
+     * 2. JPA, 게시글 조회
+     * 3. JPA. 게시글에 작성한 댓글 삭제
+     * 4-1. JPA, 게시글 조회
+     * 4-2. JPA, 게시글 삭제
+     */
     @Transactional
     public void deletePost(long id, long memberId) {
         if (!memberJpaRepository.existsById(memberId)) {
@@ -118,7 +130,8 @@ public class PostService {
             throw new NotAuthorizedException();
         }
 
-        postJpaRepository.deleteById(id);
+        commentJpaRepository.deleteAllByPostId(id);
+        postJpaRepository.delete(foundPostEntity);
 
         // INFO: 사실 이미지를 삭제하면 복구할 방법이 없다. 소프르 삭제를 수행해야 한다.
         imageUtilityComponent.deleteImage(foundPostEntity.getImageUrl());

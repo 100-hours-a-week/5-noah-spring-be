@@ -25,10 +25,14 @@ public class PostEntity {
     @JoinColumn(name = "member_id")
     private MemberEntity memberEntity;
 
+    @OneToMany(mappedBy = "postEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @Getter(AccessLevel.NONE)
+    private List<CommentEntity> commentEntities;
+
     @CreatedDate
     private LocalDateTime createdDate;
 
-    @Column(nullable = false, length = 128)
+    @Column(length = 128)
     private String imageUrl;
 
     @Column(nullable = false, length = 32)
@@ -42,10 +46,6 @@ public class PostEntity {
 
     @Column(columnDefinition = "integer default 0", nullable = false)
     private int likes;
-
-    @OneToMany(mappedBy = "postEntity", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @Getter(AccessLevel.NONE)
-    private List<CommentEntity> commentEntities;
 
     public PostEntity(MemberEntity memberEntity, String imageUrl, String title, String content) {
         this.memberEntity = memberEntity;
