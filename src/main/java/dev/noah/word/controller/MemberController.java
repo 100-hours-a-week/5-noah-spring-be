@@ -2,6 +2,7 @@ package dev.noah.word.controller;
 
 import dev.noah.word.request.UpdateMemberImageAndNicknameRequest;
 import dev.noah.word.request.UpdateMemberPasswordRequest;
+import dev.noah.word.response.SearchMemberResponse;
 import dev.noah.word.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,11 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
     private final MemberService memberService;
+
+    @GetMapping
+    public SearchMemberResponse getMember(@AuthenticationPrincipal long id) {
+        return memberService.searchMember(id);
+    }
 
     @PatchMapping("/update/image-and-nickname")
     public ResponseEntity<Void> updateImageAndNickname(

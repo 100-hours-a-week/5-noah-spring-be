@@ -6,6 +6,7 @@ import dev.noah.word.exception.MemberNotFoundException;
 import dev.noah.word.repository.CommentJpaRepository;
 import dev.noah.word.repository.MemberJdbcTemplateRepository;
 import dev.noah.word.repository.PostJpaRepository;
+import dev.noah.word.response.SearchMemberResponse;
 import dev.noah.word.service.utils.ImageUtilityComponent;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +27,22 @@ public class MemberService {
     private final PostJpaRepository postJpaRepository;
     private final ImageUtilityComponent imageUtilityComponent;
     private final PasswordEncoder passwordEncoder;
+
+    /* query: 1
+     * 1. JDBC, 사용자 조회
+     */
+    @Transactional(readOnly = true)
+    public SearchMemberResponse searchMember(long id) {
+        Member foundMember = memberJdbcTemplateRepository.findById(id)
+                .orElseThrow(MemberNotFoundException::new);
+
+        return new SearchMemberResponse(
+                foundMember.id(),
+                foundMember.imageUrl(),
+                foundMember.email(),
+                foundMember.nickname()
+        );
+    }
 
     /* query: 3
      * 1. JDBC, 사용자 조회
