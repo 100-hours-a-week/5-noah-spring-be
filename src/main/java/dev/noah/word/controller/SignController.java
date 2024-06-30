@@ -5,6 +5,8 @@ import dev.noah.word.request.SignInRequest;
 import dev.noah.word.request.SignUpRequest;
 import dev.noah.word.response.ErrorResponse;
 import dev.noah.word.service.SignService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,8 +38,13 @@ public class SignController {
     }
 
     @PostMapping("/sign-out")
-    public ResponseEntity<Void> signOut() {
-        // TODO 고민 후 나중에 구현
+    public ResponseEntity<Void> signOut(HttpServletResponse httpServletResponse) {
+        Cookie expiredCookie = new Cookie("accessToken", null);
+        expiredCookie.setMaxAge(0);
+        expiredCookie.setPath("/");
+
+        httpServletResponse.addCookie(expiredCookie);
+
         return ResponseEntity.ok().build();
     }
 
