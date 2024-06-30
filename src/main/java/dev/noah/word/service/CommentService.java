@@ -35,15 +35,7 @@ public class CommentService {
             throw new PostNotFoundException();
         }
 
-        return commentJpaRepository.findAllByPostEntity_Id(postId)
-                .stream()
-                .map(commentEntity -> new SearchAllCommentResponse(
-                        commentEntity.getId(),
-                        commentEntity.getMemberEntity().getId(),
-                        commentEntity.getCreatedDate(),
-                        commentEntity.getContent()
-                ))
-                .toList();
+        return commentJpaRepository.findAllByPostIdWithAuthor(postId);
     }
 
     /* query: 3
