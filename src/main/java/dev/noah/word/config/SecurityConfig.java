@@ -19,7 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import java.util.Collections;
 
 @Configuration
-@EnableWebSecurity(debug = true) // TODO 디버그 해제
+@EnableWebSecurity
 @AllArgsConstructor
 public class SecurityConfig {
 
