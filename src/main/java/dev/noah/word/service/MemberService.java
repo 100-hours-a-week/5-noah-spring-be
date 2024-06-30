@@ -71,7 +71,7 @@ public class MemberService {
      * 2. JDBC, 사용자 비밀번호 갱신
      */
     public void updatePassword(long id, String password) {
-        if (memberJdbcTemplateRepository.existsById(id)) {
+        if (!memberJdbcTemplateRepository.existsById(id)) {
             throw new MemberNotFoundException();
         }
 
