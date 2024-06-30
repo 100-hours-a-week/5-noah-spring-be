@@ -7,6 +7,7 @@ public record SearchPostResponse(
         String authorName,
         String authorImageUrl,
         LocalDateTime createdDate,
+        String imageUrl,
         String title,
         String content,
         int views,

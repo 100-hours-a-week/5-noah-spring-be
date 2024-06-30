@@ -20,7 +20,7 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, Long> {
             "GROUP BY p.id, m.nickname, m.imageUrl, p.createdDate, p.title, p.views, p.likes")
     List<SearchAllPostResponse> findAllWithAuthorAndComments();
 
-    @Query("SELECT NEW dev.noah.word.response.SearchPostResponse(p.id, m.nickname, m.imageUrl, p.createdDate, p.title, p.content, p.views, COUNT(c.id)) " +
+    @Query("SELECT NEW dev.noah.word.response.SearchPostResponse(p.id, m.nickname, m.imageUrl, p.createdDate, p.imageUrl, p.title, p.content, p.views, COUNT(c.id)) " +
             "FROM PostEntity p " +
             "JOIN p.memberEntity m " +
             "LEFT JOIN p.commentEntities c " +
