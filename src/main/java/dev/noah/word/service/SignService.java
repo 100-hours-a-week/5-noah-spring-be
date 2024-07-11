@@ -5,7 +5,8 @@ import dev.noah.word.exception.*;
 import dev.noah.word.common.JwtProvider;
 import dev.noah.word.repository.MemberJdbcTemplateRepository;
 import dev.noah.word.service.utils.ImageUtilityComponent;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,15 +14,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional(readOnly = true)
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SignService {
 
-    private static final String MEMBER_IMAGE_SAVE_DIRECTORY_PATH = "/member-images/";
-    private static final String MEMBER_IMAGE_SAVE_RELATIVE_PATH = "src/main/resources/public" + MEMBER_IMAGE_SAVE_DIRECTORY_PATH;
+    @Value("${spring.cloud.aws.s3.bucket-url}")
+    private String bucketUrl;
 
     private final MemberJdbcTemplateRepository memberJdbcTemplateRepository;
     private final JwtProvider jwtProvider;
     private final ImageUtilityComponent imageUtilityComponent;
+    private final S3Service s3Service;
     private final PasswordEncoder passwordEncoder;
 
     /* query: 1
@@ -53,9 +55,10 @@ public class SignService {
             throw new DuplicateNicknameException();
         }
 
-        String imageUrl = imageUtilityComponent
-                .saveImageAndReturnImageUrl(image, MEMBER_IMAGE_SAVE_DIRECTORY_PATH, MEMBER_IMAGE_SAVE_RELATIVE_PATH);
+        String imageName = imageUtilityComponent.generateImageName(image);
 
-        memberJdbcTemplateRepository.save(imageUrl, email, passwordEncoder.encode(password), nickname);
+        memberJdbcTemplateRepository.save(bucketUrl + imageName, email, passwordEncoder.encode(password), nickname);
+
+        s3Service.uploadFile(image, imageName);
     }
 }

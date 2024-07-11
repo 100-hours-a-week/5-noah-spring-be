@@ -8,24 +8,30 @@ import dev.noah.word.repository.MemberJdbcTemplateRepository;
 import dev.noah.word.repository.PostJpaRepository;
 import dev.noah.word.response.SearchMemberResponse;
 import dev.noah.word.service.utils.ImageUtilityComponent;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ServerErrorException;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 @Service
 @Transactional
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class MemberService {
 
-    private static final String MEMBER_IMAGE_SAVE_DIRECTORY_PATH = "/member-images/";
-    private static final String MEMBER_IMAGE_SAVE_RELATIVE_PATH = "src/main/resources/public" + MEMBER_IMAGE_SAVE_DIRECTORY_PATH;
+    @Value("${spring.cloud.aws.s3.bucket-url}")
+    private String bucketUrl;
 
     private final MemberJdbcTemplateRepository memberJdbcTemplateRepository;
     private final CommentJpaRepository commentJpaRepository;
     private final PostJpaRepository postJpaRepository;
     private final ImageUtilityComponent imageUtilityComponent;
+    private final S3Service s3Service;
     private final PasswordEncoder passwordEncoder;
 
     /* query: 1
@@ -57,13 +63,13 @@ public class MemberService {
             throw new DuplicateNicknameException();
         }
 
-        String imageUrl = imageUtilityComponent
-                .saveImageAndReturnImageUrl(image, MEMBER_IMAGE_SAVE_DIRECTORY_PATH, MEMBER_IMAGE_SAVE_RELATIVE_PATH);
+        String imageName = imageUtilityComponent.generateImageName(image);
 
-        memberJdbcTemplateRepository.updateImageUrlAndNicknameById(id, imageUrl, nickname);
+        memberJdbcTemplateRepository.updateImageUrlAndNicknameById(id, bucketUrl + imageName, nickname);
 
-        // INFO: 사실 이미지를 삭제하면 복구할 방법이 없다. 소프르 삭제를 수행해야 한다.
-        imageUtilityComponent.deleteImage(foundMember.imageUrl());
+        s3Service.uploadFile(image, imageName);
+
+        s3Service.deleteFile(getCurrentFileName(foundMember.imageUrl()));
     }
 
     /* query: 2
@@ -92,7 +98,16 @@ public class MemberService {
         postJpaRepository.deleteAllByMemberId(id);
         memberJdbcTemplateRepository.deleteById(id);
 
-        // INFO: 사실 이미지를 삭제하면 복구할 방법이 없다. 소프르 삭제를 수행해야 한다.
-        imageUtilityComponent.deleteImage(foundMember.imageUrl());
+        s3Service.deleteFile(getCurrentFileName(foundMember.imageUrl()));
+    }
+
+    private String getCurrentFileName(String imageUrl) {
+        try {
+            URL url = new URL(imageUrl);
+
+            return url.getFile().substring(1);
+        } catch (MalformedURLException e) {
+            throw new ServerErrorException("failed to parse image url", e);
+        }
     }
 }
