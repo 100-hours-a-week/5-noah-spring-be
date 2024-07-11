@@ -11,25 +11,30 @@ import dev.noah.word.repository.PostJpaRepository;
 import dev.noah.word.response.SearchAllPostResponse;
 import dev.noah.word.response.SearchPostResponse;
 import dev.noah.word.service.utils.ImageUtilityComponent;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ServerErrorException;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PostService {
 
-    private static final String POST_IMAGE_SAVE_DIRECTORY_PATH = "/post-images/";
-    private static final String POST_IMAGE_SAVE_RELATIVE_PATH = "src/main/resources/public" + POST_IMAGE_SAVE_DIRECTORY_PATH;
+    @Value("${spring.cloud.aws.s3.bucket-url}")
+    private String bucketUrl;
 
     private final PostJpaRepository postJpaRepository;
     private final MemberJpaRepository memberJpaRepository;
     private final CommentJpaRepository commentJpaRepository;
     private final ImageUtilityComponent imageUtilityComponent;
+    private final S3Service s3Service;
 
     /* query: 1
      * 1. JPA, 게시글 전체 조회 (최적화)
@@ -75,10 +80,17 @@ public class PostService {
     public void createPost(long memberId, MultipartFile image, String title, String content) {
         MemberEntity foundMemberEntity = memberJpaRepository.findById(memberId).orElseThrow(MemberNotFoundException::new);
 
-        String imageUrl = imageUtilityComponent
-                .saveImageAndReturnImageUrl(image, POST_IMAGE_SAVE_DIRECTORY_PATH, POST_IMAGE_SAVE_RELATIVE_PATH);
+        if (image == null) {
+            postJpaRepository.save(new PostEntity(foundMemberEntity, null, title, content));
 
-        postJpaRepository.save(new PostEntity(foundMemberEntity, imageUrl, title, content));
+            return;
+        }
+
+        String imageName = imageUtilityComponent.generateImageName(image);
+
+        postJpaRepository.save(new PostEntity(foundMemberEntity, bucketUrl + imageName, title, content));
+
+        s3Service.uploadFile(image, imageName);
     }
 
     /* query: 3
@@ -99,15 +111,21 @@ public class PostService {
             throw new NotAuthorizedException();
         }
 
-        String imageUrl = imageUtilityComponent
-                .saveImageAndReturnImageUrl(image, POST_IMAGE_SAVE_DIRECTORY_PATH, POST_IMAGE_SAVE_RELATIVE_PATH);
+        String currentImageUrl = foundPostEntity.getImageUrl();
 
-        // INFO: 사실 이미지를 삭제하면 복구할 방법이 없다. 소프르 삭제를 수행해야 한다.
-        imageUtilityComponent.deleteImage(foundPostEntity.getImageUrl());
+        if (image == null || image.isEmpty()) {
+            foundPostEntity.editPost(null, title, content);
+        } else {
+            String imageName = imageUtilityComponent.generateImageName(image);
 
-        foundPostEntity.editPost(imageUrl, title, content);
+            foundPostEntity.editPost(bucketUrl + imageName, title, content);
 
-        postJpaRepository.save(foundPostEntity);
+            s3Service.uploadFile(image, imageName);
+        }
+
+        if (currentImageUrl != null) {
+            s3Service.deleteFile(getCurrentFileName(currentImageUrl));
+        }
     }
 
     /* query: 5
@@ -133,7 +151,16 @@ public class PostService {
         commentJpaRepository.deleteAllByPostId(id);
         postJpaRepository.delete(foundPostEntity);
 
-        // INFO: 사실 이미지를 삭제하면 복구할 방법이 없다. 소프르 삭제를 수행해야 한다.
-        imageUtilityComponent.deleteImage(foundPostEntity.getImageUrl());
+        s3Service.deleteFile(getCurrentFileName(foundPostEntity.getImageUrl()));
+    }
+
+    private String getCurrentFileName(String imageUrl) {
+        try {
+            URL url = new URL(imageUrl);
+
+            return url.getFile().substring(1);
+        } catch (MalformedURLException e) {
+            throw new ServerErrorException("failed to parse image url", e);
+        }
     }
 }
